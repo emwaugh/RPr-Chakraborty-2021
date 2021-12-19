@@ -6,7 +6,8 @@ output:
 # Rpr-Reproduction of Social Inequities in the distribution of COVID-19: An intra-categorical analysis of people with disabilities in the U.S.
 
 Joseph Holler, Department of Geography, Middlebury College, Middlebury VT 05753
-Drew An-Pham, Department of Geography, Middlebury College, Middlebury VT 05753 Derrick Burt, Department of Geography, Middlebury College, Middlebury VT 05753
+Drew An-Pham, Department of Geography, Middlebury College, Middlebury VT 05753
+Derrick Burt, Department of Geography, Middlebury College, Middlebury VT 05753
 Peter Kedron, School of Geographical Sciences and Urban Planning, Arizona State University, Tempe AZ 85281 
 
 Version 1.0 | Created Jul 7, 2021 | Last Updated August 14, 2021
@@ -57,7 +58,7 @@ Other software are not specified in the publication; however data files and comm
 ```{r setup, message = FALSE, include = FALSE}
 # list of required packages
 # we could probably be listing them all here, making the previous block redundant.
-packages = c("tidycensus", "tidyverse", "downloader", "haven", "stars", "dplyr", "sf", "rdhs", "classInt", "readr", "ggplot2", "here", "s2", "pastecs", "tmap", "vtable", "SpatialEpi", "svDialogs", "geepack")
+packages = c("tidycensus", "tidyverse", "downloader", "haven", "dplyr", "sf", "classInt", "readr", "ggplot2", "here", "s2", "pastecs", "tmap", "SpatialEpi", "svDialogs", "geepack")
 
 # load and install required packages
 package.check <- lapply(
@@ -74,7 +75,7 @@ package.check <- lapply(
 writeLines(capture.output(sessionInfo()),here("procedure","environment","r_environment.txt"))
 ```
 
-## Query American Communtity Survey Data
+## Query American Community Survey Data
 This will require an API key for the census, which can be acquired easily here: [api.census.gov/data/key_signup.html](https://api.census.gov/data/key_signup.html)
 This query can take some time to run...
 
@@ -202,10 +203,7 @@ acs_covid <- select(acs_covid, geoid, statefp, county, county_st, covid_rate,
 
 ```{r map covid rates}
 
-# This is not a working correct map. Need to map 5
-# quintile classes of covid_rate to mach figure 1
-
-tm_shape(acs_covid) +
+covid_map <- tm_shape(acs_covid) +
   tm_polygons("covid_rate", 
     title="COVID-19 Cases per 100,000",
     style="quantile",
@@ -214,13 +212,15 @@ tm_shape(acs_covid) +
     palette="YlOrBr"
   )
 
+tmap_save(covid_map, here("results", "figures", "covidrates.png"))
+
 ```
 
 ## Map Disability Rates
 
 ```{r map disability rates}
 
-tm_shape(acs_covid) +
+disability_map <- tm_shape(acs_covid) +
   tm_polygons("dis_pct", 
     title="Percent with Disability",
     style="quantile",
@@ -228,6 +228,8 @@ tm_shape(acs_covid) +
     lwd = 0.2,
     palette="YlOrBr"
   )
+
+tmap_save(disability_map, here("results", "figures", "disabilityrates.png"))
 
 ```
 
@@ -428,7 +430,7 @@ Note that relative risk is > 1 only if the county was in a cluster
 
 ```{r map relative risk scores}
 # Map Relative Risk scores
-tm_shape(covid) +
+relrisk_map <- tm_shape(covid) +
   tm_polygons("rr_class", 
     title="Local Relative Risk",
     border.alpha = .2,
@@ -436,6 +438,9 @@ tm_shape(covid) +
     palette="YlOrBr",
     style="cat"
   )
+
+tmap_save(relrisk_map, here("results", "figures", "relrisk.png"))
+
 ```
 
 ## Preprocess data for GEE modelling
@@ -472,7 +477,7 @@ Optionally, you may load the preprocessed data from `data/raw/public/gee_data.gp
 gee_data <- read_sf(here("data","derived","public","gee_data.gpkg"))
 ```
 
-# Report numer of unique clusters
+# Report number of unique clusters
 
 ```{r}
 cluster_summary <- gee_data %>% 
@@ -486,7 +491,7 @@ summary(cluster_summary$n)
 
 Generalized Estimating Equation parameters:
 
-"The **‘exchangeable’ correlation matrix** was selected for the results reported here, since this speci-fication yielded the best statistical fit based on the QIC (quasi- likelihood under the independence) model criterion."
+"The **‘exchangeable’ correlation matrix** was selected for the results reported here, since this specification yielded the best statistical fit based on the QIC (quasi- likelihood under the independence) model criterion."
 (Chakraborty 2021, Methods paragraph 5)
 
 "The **gamma distribution** with **logarithmic link function** was chosen for all GEEs since this model specification provided the lowest QIC value."
